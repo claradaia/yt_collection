@@ -1,0 +1,2 @@
+google-api-python-client~=2.137
+pytz~=2024.1

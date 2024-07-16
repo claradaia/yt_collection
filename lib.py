@@ -37,14 +37,14 @@ def discrepancy(rows, index):
         return []
     discrepancies = []
     # do first item
-    if rows[0][index] < rows[1][index] * rate:
+    if rows[0][index] * rate < rows[1][index]:
         discrepancies.append(0)
     for i in range(1, len(rows) - 2):
-        if (rows[i][index] < rows[i-1][index] * rate or
-           rows[i][index] < rows[i + 1][index] * rate):
+        if (rows[i][index] * rate < rows[i-1][index] or
+           rows[i][index] * rate < rows[i+1][index]):
             discrepancies.append(i)
     # do last item
-    if rows[-1][index] < rows[-2][index] * rate:
+    if rows[-1][index] * rate < rows[-2][index]:
         discrepancies.append(len(rows) - 1)
     return discrepancies
 

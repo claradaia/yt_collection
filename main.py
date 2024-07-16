@@ -97,7 +97,8 @@ for niche in niches:
             channels[video['snippet']['channelId']][0],
             channels[video['snippet']['channelId']][1],
             channels[video['snippet']['channelId']][2],
-            channels[video['snippet']['channelId']][3]
+            channels[video['snippet']['channelId']][3],
+            False
         ]
         niche['videos'].append(video_item)
 
@@ -107,6 +108,7 @@ for niche in niches:
     discrepants = discrepancy(niche_rows, 6)
     for index in discrepants:
         niche_rows[index][5] += '**'
+        niche['videos'][index][8] = True
 
     rows.extend(niche_rows)
 

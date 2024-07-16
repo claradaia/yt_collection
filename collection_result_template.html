@@ -8,18 +8,25 @@
             text-align: center;
             flex: 1;
         }
+
         body {
             font-family: 'Roboto', sans-serif;
         }
+
         .header {
-          padding: 45.9px;
-          text-align: left;
-          background: rgb(17, 17, 17);
-          color: white;
-          display: flex;
-          align-items: center;
+            padding: 45.9px;
+            text-align: left;
+            background: rgb(17, 17, 17);
+            color: white;
+            display: flex;
+            align-items: center;
         }
 
+        .discrepancy-highlight {
+            background-color: #33ECBE;
+            border-radius: 3px;
+            padding: 1px 3px;
+        }
     </style>
 </head>
 <body>
@@ -39,7 +46,7 @@
                 <li><b>Release Date:</b> {{ video[2] }}</li>
                 <li><b>Views:</b> {{ video[3] | intcomma }}</li>
                 <li><b>Channel Name:</b> {{ video[4] }}</li>
-                <li><b>Subscribers:</b> {{ video[5] | intcomma }}</li>
+                <li><span class="{{ 'discrepancy-highlight' if video[8] else '' }}"><b>Subscribers:</b> {{ video[5] | intcomma }}</span></li>
                 <li><b>Channel Views:</b> {{ video[6] | intcomma }}</li>
                 <li><b>Country:</b> {{ video[7] }}</li>
             </ul>

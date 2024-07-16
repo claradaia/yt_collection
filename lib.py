@@ -49,6 +49,10 @@ def discrepancy(rows, index):
     return discrepancies
 
 
+def intcomma(value):
+    return "{:,}".format(int(value))
+
+
 def export_csv(filename, header, rows):
     with open(filename, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
@@ -60,6 +64,7 @@ def export_csv(filename, header, rows):
 
 def render_html(niches, date_str):
     env = Environment(loader=FileSystemLoader('.'), cache_size=0)
+    env.filters['intcomma'] = intcomma
     template = env.get_template('collection_result_template.html')
     this_folder = os.path.dirname(os.path.abspath(__file__))
     logo_path = 'file:\\' + os.path.join(this_folder, 'static', 'images', conf.logo_filename)

@@ -30,17 +30,17 @@
     </div>
 
     {% for niche in niches %}
-        <h2>{{ niche.q }}: {{ niche.total_views_count }} views</h2>
+        <h2>{{ niche.q }}: {{ niche.total_views_count | intcomma }} views</h2>
 
         {% for video in niche.videos %}
 
     <h3><a href="www.youtube.com/watch?v={{ video[0] }}">{{ video[1] }}</a></h3>
             <ul>
                 <li><b>Release Date:</b> {{ video[2] }}</li>
-                <li><b>Views:</b> {{ video[3] }}</li>
+                <li><b>Views:</b> {{ video[3] | intcomma }}</li>
                 <li><b>Channel Name:</b> {{ video[4] }}</li>
-                <li><b>Subscribers:</b> {{ video[5] }}</li>
-                <li><b>Channel Views:</b> {{ video[6] }}</li>
+                <li><b>Subscribers:</b> {{ video[5] | intcomma }}</li>
+                <li><b>Channel Views:</b> {{ video[6] | intcomma }}</li>
                 <li><b>Country:</b> {{ video[7] }}</li>
             </ul>
 

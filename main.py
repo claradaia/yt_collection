@@ -1,5 +1,5 @@
 import conf
-from aux import query_yes_no, discrepancy, export_csv, parse_niches
+from lib import query_yes_no, discrepancy, export_csv, parse_niches, export_html, export_pdf
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 from pytz import UTC
@@ -15,6 +15,8 @@ youtube = build('youtube', 'v3', developerKey=conf.API_KEY)
 
 now = datetime.now(UTC)
 date_str = now.strftime('%d-%m-%y')
+
+# for csv
 rows = []
 
 for niche in niches:
@@ -62,19 +64,39 @@ for niche in niches:
                                     item['statistics']['viewCount'],
                                     country])
 
-    # format
+    # organize for export
     niche_rows = []
+
+    niche['videos'] = []
+    niche['total_view_count'] = 0
     for video in video_response['items']:
+        release_date = datetime.strptime(video['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
+
+        # csv
         row = [
             q,
             video['id'],
             video['snippet']['title'],
-            datetime.strptime(video['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
+            release_date,
             video['statistics']['viewCount']
         ]
         row.extend(channels[video['snippet']['channelId']])
         row.append(date_str)
         niche_rows.append(row)
+
+        # html
+        niche['total_view_count'] += int(video['statistics']['viewCount'])
+        video_item = [
+            video['id'],
+            video['snippet']['title'],
+            release_date,
+            channels[video['snippet']['channelId']][0],
+            video['statistics']['viewCount'],
+            channels[video['snippet']['channelId']][1],
+            channels[video['snippet']['channelId']][2],
+            channels[video['snippet']['channelId']][3]
+        ]
+        niche['videos'].append(video_item)
 
     pprint(rows)
 
@@ -86,7 +108,7 @@ for niche in niches:
     rows.extend(niche_rows)
 
 
-# Generate final report
+# Generate report
 header = [
     'Niche',
     'Video URL',
@@ -100,5 +122,8 @@ header = [
     'Collection Date'
 ]
 
-file_path = 'collection_result_' + date_str + '.csv'
-export_csv(file_path, header, rows)
+result_filename = 'collection_result_' + date_str
+
+export_csv(result_filename, header, rows)
+export_html(result_filename, niches, date_str)
+export_pdf(result_filename, niches, date_str)

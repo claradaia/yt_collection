@@ -1,7 +1,9 @@
 import conf
 from lib import query_yes_no, discrepancy, export_csv, parse_niches, export_html, export_pdf
-from googleapiclient.discovery import build
+
 from datetime import datetime, timedelta
+from googleapiclient.discovery import build
+from iso3166 import countries
 from pytz import UTC
 from pprint import pprint
 
@@ -59,7 +61,8 @@ for niche in niches:
 
     print(f'Done. Gathering...')
     for item in channel_response['items']:
-        country = item['snippet'].get('country', 'Not Available')
+        country_code = item['snippet'].get('country')
+        country = countries.get(country_code).name if country_code else 'Not Available'
         channels[item['id']].extend([int(item['statistics']['subscriberCount']),
                                     item['statistics']['viewCount'],
                                     country])
@@ -68,7 +71,7 @@ for niche in niches:
     niche_rows = []
 
     niche['videos'] = []
-    niche['total_view_count'] = 0
+    niche['total_views_count'] = 0
     for video in video_response['items']:
         release_date = datetime.strptime(video['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
 
@@ -85,13 +88,13 @@ for niche in niches:
         niche_rows.append(row)
 
         # html
-        niche['total_view_count'] += int(video['statistics']['viewCount'])
+        niche['total_views_count'] += int(video['statistics']['viewCount'])
         video_item = [
             video['id'],
             video['snippet']['title'],
             release_date,
-            channels[video['snippet']['channelId']][0],
             video['statistics']['viewCount'],
+            channels[video['snippet']['channelId']][0],
             channels[video['snippet']['channelId']][1],
             channels[video['snippet']['channelId']][2],
             channels[video['snippet']['channelId']][3]
@@ -118,7 +121,7 @@ header = [
     'Channel Title',
     'Channel Subscribers',
     'Channel Views',
-    'Region Code',
+    'Country',
     'Collection Date'
 ]
 

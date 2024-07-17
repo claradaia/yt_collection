@@ -89,17 +89,19 @@ for niche in niches:
 
         # html
         niche['total_views_count'] += int(video['statistics']['viewCount'])
-        video_item = [
-            video['id'],
-            video['snippet']['title'],
-            release_date,
-            video['statistics']['viewCount'],
-            channels[video['snippet']['channelId']][0],
-            channels[video['snippet']['channelId']][1],
-            channels[video['snippet']['channelId']][2],
-            channels[video['snippet']['channelId']][3],
-            False
-        ]
+        video_item = {
+            'id': video['id'],
+            'title': video['snippet']['title'],
+            'release_date': release_date,
+            'views': video['statistics']['viewCount'],
+            'channel': {
+                'title': channels[video['snippet']['channelId']][0],
+                'subscribers': channels[video['snippet']['channelId']][1],
+                'views': channels[video['snippet']['channelId']][2],
+                'country': channels[video['snippet']['channelId']][3]
+            },
+            'discrepancy': False
+        }
         niche['videos'].append(video_item)
 
     pprint(rows)
@@ -108,7 +110,7 @@ for niche in niches:
     discrepants = discrepancy(niche_rows, 6)
     for index in discrepants:
         niche_rows[index][5] += '**'
-        niche['videos'][index][8] = True
+        niche['videos'][index]['discrepancy'] = True
 
     rows.extend(niche_rows)
 

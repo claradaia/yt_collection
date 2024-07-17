@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from googleapiclient.discovery import build
 from iso3166 import countries
 from pytz import UTC
-from pprint import pprint
 
 # parse and check niches
 niches = parse_niches(conf.NICHES_FILE)
@@ -17,9 +16,6 @@ youtube = build('youtube', 'v3', developerKey=conf.API_KEY)
 
 now = datetime.now(UTC)
 date_str = now.strftime('%d-%m-%y')
-
-# for csv
-rows = []
 
 for niche in niches:
     date_cutoff = datetime.isoformat(now - timedelta(days=niche['days']))
@@ -75,19 +71,6 @@ for niche in niches:
     for video in video_response['items']:
         release_date = datetime.strptime(video['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
 
-        # csv
-        row = [
-            q,
-            video['id'],
-            video['snippet']['title'],
-            release_date,
-            video['statistics']['viewCount']
-        ]
-        row.extend(channels[video['snippet']['channelId']])
-        row.append(date_str)
-        niche_rows.append(row)
-
-        # html
         niche['total_views_count'] += int(video['statistics']['viewCount'])
         video_item = {
             'id': video['id'],
@@ -104,33 +87,13 @@ for niche in niches:
         }
         niche['videos'].append(video_item)
 
-    pprint(rows)
-
-    # check discrepancy factor
-    discrepants = discrepancy(niche_rows, 6)
-    for index in discrepants:
-        niche_rows[index][5] += '**'
-        niche['videos'][index]['discrepancy'] = True
-
-    rows.extend(niche_rows)
+        # tag discrepancy factor
+        discrepancy(niche['videos'])
 
 
-# Generate report
-header = [
-    'Niche',
-    'Video URL',
-    'Video Title',
-    'Release Date',
-    'Views Count',
-    'Channel Title',
-    'Channel Subscribers',
-    'Channel Views',
-    'Country',
-    'Collection Date'
-]
-
+# Generate reports
 result_filename = 'collection_result_' + date_str
 
-export_csv(result_filename, header, rows)
+export_csv(result_filename, niches, date_str)
 export_html(result_filename, niches, date_str)
 export_pdf(result_filename, niches, date_str)

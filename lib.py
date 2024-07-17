@@ -27,34 +27,66 @@ def parse_niches(filename):
     return niches
 
 
-def discrepancy(rows, index):
+def discrepancy(videos):
     """
     Find channels with less than 50% the number of subscribers of its
     neighbours with comparable number of views.
     """
     rate = 2
-    if len(rows) < 2:
-        return []
-    discrepancies = []
+    if len(videos) < 2:
+        return True
+
     # do first item
-    if rows[0][index] * rate < rows[1][index]:
-        discrepancies.append(0)
-    for i in range(1, len(rows) - 2):
-        if (rows[i][index] * rate < rows[i-1][index] or
-           rows[i][index] * rate < rows[i+1][index]):
-            discrepancies.append(i)
+    if videos[0]['channel']['subscribers'] * rate < videos[1]['channel']['subscribers']:
+        videos[0]['discrepancy'] = True
+    for i in range(1, len(videos) - 2):
+        if (videos[i]['channel']['subscribers'] * rate < videos[i-1]['channel']['subscribers'] or
+           videos[i]['channel']['subscribers'] * rate < videos[i+1]['channel']['subscribers']):
+            videos[i]['discrepancy'] = True
     # do last item
-    if rows[-1][index] * rate < rows[-2][index]:
-        discrepancies.append(len(rows) - 1)
-    return discrepancies
+    if videos[-1]['channel']['subscribers'] * rate < videos[-2]['channel']['subscribers']:
+        videos[-1]['discrepancy'] = True
+
+    return True
 
 
 def intcomma(value):
     return "{:,}".format(int(value))
 
 
-def export_csv(filename, header, rows):
-    with open(filename, mode='w', newline='', encoding='utf-8') as file:
+def export_csv(filename, niches, date_str):
+    header = [
+        'Niche',
+        'Video URL',
+        'Video Title',
+        'Release Date',
+        'Views Count',
+        'Channel Title',
+        'Channel Subscribers',
+        'Channel Views',
+        'Country',
+        'Collection Date'
+    ]
+
+    rows = []
+    for niche in niches:
+        row = [niche['q']]  # niche
+        for video in niche['videos']:
+            row.extend([
+                video['id'],
+                video['title'],
+                video['release_date'],
+                video['views'],
+                video['channel']['title'],
+                video['channel']['subscribers'],
+                video['channel']['views'],
+                video['channel']['country'],
+                date_str
+            ])
+            rows.append(row)
+
+    _filename = filename + '.csv'
+    with open(_filename, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(rows)

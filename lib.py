@@ -1,8 +1,10 @@
+import ast
 import conf
 import csv
 import os
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
+from openai import OpenAI
 
 
 def query_yes_no(question):
@@ -25,6 +27,50 @@ def parse_niches(filename):
             }
             niches.append(query)
     return niches
+
+
+def get_title_suggestions(niche):
+    client = OpenAI(api_key=conf.OPENAI_API_KEY)
+
+    response = client.chat.completions.create(
+      model="gpt-3.5-turbo",
+      messages=[
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "You are a famous youtuber that also knows programming. You will be provided with a topic, "
+                      "and your task is to print 10 suggested YouTube video names as a python list variable without any headers or extra formatting."
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": niche
+            }
+          ]
+        }
+      ],
+      temperature=1,
+      max_tokens=256,
+      top_p=1,
+      frequency_penalty=0,
+      presence_penalty=0
+    )
+    try:
+        titles = ast.literal_eval(response.choices[0].message.content)
+    except:
+        _filename = niche.replace(' ', '_') + ".txt"
+        with open(_filename, "w", encoding='utf-8') as file:
+            file.write(response.choices[0].message.content)
+        print(f'Something went wrong with OpenAI response for niche \"{niche}\". '
+              f'The output has been saved to \"{niche}.txt\" for reference.')
+        return []
+    return titles
 
 
 def discrepancy(videos):

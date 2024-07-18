@@ -1,5 +1,5 @@
 import conf
-from lib import query_yes_no, discrepancy, export_csv, parse_niches, export_html, export_pdf
+from lib import query_yes_no, discrepancy, export_csv, parse_niches, export_html, export_pdf, get_title_suggestions
 
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
@@ -12,7 +12,7 @@ if not query_yes_no(f"""{niches}\n\nDoes this look correct? [Y/n]:"""):
     exit(0)
 
 # configure yt access
-youtube = build('youtube', 'v3', developerKey=conf.API_KEY)
+youtube = build('youtube', 'v3', developerKey=conf.YT_API_KEY)
 
 now = datetime.now(UTC)
 date_str = now.strftime('%d-%m-%y')
@@ -54,6 +54,9 @@ for niche in niches:
         id=','.join(channels.keys()),
         part='snippet,statistics'
     ).execute()
+
+    print(f'Done. Requesting title suggestions...')
+    niche['titles'] = get_title_suggestions(niche['q'])
 
     print(f'Done. Gathering...')
     for item in channel_response['items']:

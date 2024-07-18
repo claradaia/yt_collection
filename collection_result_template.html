@@ -38,6 +38,13 @@
             padding: 10px;
             color: white;
         }
+
+        h3 {
+            background-color: rgb(65, 65, 65);
+            border-radius: 5px;
+            padding: 10px;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -53,17 +60,24 @@
 
         {% for video in niche.videos %}
 
-    <h3><a href="www.youtube.com/watch?v={{ video.id }}">{{ video.title }}</a></h3>
-            <ul>
-                <li><b>Release Date:</b> {{ video.release_date }}</li>
-                <li><b>Views:</b> {{ video.views | intcomma }}</li>
-                <li><b>Channel Name:</b> {{ video.channel.title }}</li>
-                <li><span class="{{ 'discrepancy-highlight' if video.discrepancy else '' }}"><b>Subscribers:</b> {{ video.channel.subscribers | intcomma }}</span></li>
-                <li><b>Channel Views:</b> {{ video.channel.views | intcomma }}</li>
-                <li><b>Country:</b> {{ video.channel.country }}</li>
-            </ul>
+            <h4><a href="www.youtube.com/watch?v={{ video.id }}">{{ video.title }}</a></h4>
+                <ul>
+                    <li><b>Release Date:</b> {{ video.release_date }}</li>
+                    <li><b>Views:</b> {{ video.views | intcomma }}</li>
+                    <li><b>Channel Name:</b> {{ video.channel.title }}</li>
+                    <li><span class="{{ 'discrepancy-highlight' if video.discrepancy else '' }}"><b>Subscribers:</b> {{ video.channel.subscribers | intcomma }}</span></li>
+                    <li><b>Channel Views:</b> {{ video.channel.views | intcomma }}</li>
+                    <li><b>Country:</b> {{ video.channel.country }}</li>
+                </ul>
 
         {% endfor %}
+
+        <h3>Title suggestions</h3>
+            <ul>
+                {% for title in niche.titles %}
+                    <li><b>{{ title }}</b></li>
+                {% endfor %}
+            </ul>
 
     {% endfor %}
     </div>

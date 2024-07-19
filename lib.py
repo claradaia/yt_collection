@@ -138,13 +138,13 @@ def export_csv(filename, niches, date_str):
             ])
             rows.append(row)
 
-    _filename = filename + '.csv'
+    _filename = os.path.join(conf.OUTPUT_DIR, filename + '.csv')
     with open(_filename, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(rows)
 
-    print(f"CSV file '{filename}' created successfully.")
+    print(f"CSV file '{_filename}' created successfully.")
 
 
 def render_html(niches, date_str):
@@ -158,7 +158,7 @@ def render_html(niches, date_str):
 
 def export_html(filename, niches, date_str):
     rendered_html = render_html(niches, date_str)
-    _filename = filename + '.html'
+    _filename = os.path.join(conf.OUTPUT_DIR, filename + '.html')
     with open(_filename, 'w', encoding='utf-8') as f:
         f.write(rendered_html)
     print(f'HTML file {_filename} rendered successfully.')
@@ -166,7 +166,7 @@ def export_html(filename, niches, date_str):
 
 def export_pdf(filename, niches, date_str):
     rendered_html = render_html(niches, date_str)
-    _filename = filename + '.pdf'
+    _filename = os.path.join(conf.OUTPUT_DIR, filename + '.pdf')
     HTML(string=rendered_html).write_pdf(_filename)
     print(f'PDF file {_filename} created successfully.')
 

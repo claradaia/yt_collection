@@ -1,0 +1,2 @@
+moral philosophy;15;15000
+fantasy books;60;30000

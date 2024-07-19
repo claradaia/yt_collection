@@ -39,7 +39,9 @@ for niche in niches:
     print(f'Gathering video details...')
     for item in search_response['items']:
         video_ids.append(item['id']['videoId'])
-        channels[item['snippet']['channelId']] = [item['snippet']['channelTitle']]
+        channels[item['snippet']['channelId']] = {
+            'title': item['snippet']['channelTitle']
+        }
 
     # Video stats
     video_response = youtube.videos().list(
@@ -60,11 +62,12 @@ for niche in niches:
 
     print(f'Done. Gathering...')
     for item in channel_response['items']:
+        channels[item['id']]['subscribers'] = int(item['statistics']['subscriberCount'])
+        channels[item['id']]['views'] = item['statistics']['viewCount']
+
         country_code = item['snippet'].get('country')
         country = countries.get(country_code).name if country_code else 'Not Available'
-        channels[item['id']].extend([int(item['statistics']['subscriberCount']),
-                                    item['statistics']['viewCount'],
-                                    country])
+        channels[item['id']]['country'] = country
 
     # organize for export
     niche_rows = []
@@ -80,12 +83,7 @@ for niche in niches:
             'title': video['snippet']['title'],
             'release_date': release_date,
             'views': video['statistics']['viewCount'],
-            'channel': {
-                'title': channels[video['snippet']['channelId']][0],
-                'subscribers': channels[video['snippet']['channelId']][1],
-                'views': channels[video['snippet']['channelId']][2],
-                'country': channels[video['snippet']['channelId']][3]
-            },
+            'channel': channels[video['snippet']['channelId']],
             'discrepancy': False
         }
         niche['videos'].append(video_item)

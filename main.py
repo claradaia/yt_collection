@@ -27,7 +27,8 @@ for niche in niches:
         q=q,
         date_cutoff=date_cutoff,
         max_pages=max_pages_per_niche,
-        max_videos=10
+        max_videos=20,
+        max_subscribers=niche['max_subscribers']
     )
 
     niche['total_views_count'] = 0
@@ -35,6 +36,7 @@ for niche in niches:
         niche['total_views_count'] += int(video['views'])
 
     print(f'Done. Detecting discrepancies...')
+
     # tag discrepancy factor
     discrepancy(niche['videos'])
 

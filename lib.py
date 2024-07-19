@@ -27,10 +27,11 @@ def parse_niches(filename):
     niches = []
     with open(filename, mode='r') as file:
         for line in file.readlines():
-            q, days = line.strip().split(';')
+            q, days, max_sub = line.strip().split(';')
             query = {
                 'q': q,
-                'days': int(days)
+                'days': int(days),
+                'max_subscribers': int(max_sub)
             }
             niches.append(query)
     return niches
@@ -171,12 +172,15 @@ def export_pdf(filename, niches, date_str):
     print(f'PDF file {_filename} created successfully.')
 
 
-def search_videos(q, date_cutoff=None, max_pages=3, max_videos=10):
+def search_videos(q, date_cutoff=None, max_pages=3, max_videos=20, max_subscribers=None):
     p = 0
-    videos_found = []
     next_page = True
     page_token = None
-    while p < max_pages and next_page and len(videos_found) < max_videos:
+
+    channels = {}
+    formatted_videos = []
+
+    while p < max_pages and next_page and len(formatted_videos) < max_videos:
         search_response = youtube.search().list(
             part='snippet',
             q=q,
@@ -184,72 +188,81 @@ def search_videos(q, date_cutoff=None, max_pages=3, max_videos=10):
             publishedAfter=date_cutoff,
             order='viewCount',
             pageToken=page_token,
-            maxResults=10
+            maxResults=50
         ).execute()
 
-        videos_found.extend(search_response['items'])
+        videos_found_r = search_response['items']
+
+        # get ids to request details
+        video_ids = []
+        channel_ids = []  # only the ones not queried yet
+        for video in videos_found_r:
+            video_ids.append(video['id']['videoId'])
+            if video['snippet']['channelId'] not in channels:
+                channel_ids.append(video['snippet']['channelId'])
+
+        channels_response = youtube.channels().list(
+            id=','.join(channel_ids),
+            part='snippet,statistics'
+        ).execute()
+
+        channels_r = channels_response['items']
+
+        for item in channels_r:
+            country_code = item['snippet'].get('country')
+            country = countries.get(country_code).name if country_code else 'Not Available'
+            channel = {
+                'title': item['snippet']['title'],
+                'subscribers': int(item['statistics']['subscriberCount']),
+                'views': item['statistics']['viewCount'],
+                'country': country
+            }
+            channels[item['id']] = channel
+
+        videos_details_r = youtube.videos().list(
+            id=','.join(video_ids),
+            part='snippet,statistics'
+        ).execute()['items']
+
+        # drop if channel has more than the max subscribers
+        previous_len = len(videos_details_r)
+        videos_details = [item for item in videos_details_r if channels[item['snippet']['channelId']]['subscribers'] <= int(max_subscribers)]
+        print(f'Page {p + 1}: {previous_len - len(videos_details)} videos dropped for having more subscribers than '
+              f'the limit.')
+
+        # format and join
+        for video in videos_details:
+            release_date = datetime.strptime(video['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
+
+            video_item = {
+                'id': video['id'],
+                'title': video['snippet']['title'],
+                'release_date': release_date,
+                'views': video['statistics']['viewCount'],
+                'channel': channels[video['snippet']['channelId']],
+                'discrepancy': False
+            }
+            formatted_videos.append(video_item)
+
+        # pagination stuff
         page_token = search_response.get('nextPageToken')
         if not page_token:
             next_page = False
         p += 1
 
     if not next_page:
-        reason = 'Reached max requests.'
-    elif len(videos_found) >= max_videos:
+        reason = 'No more pages to retrieve.'
+    elif len(formatted_videos) >= max_videos:
         reason = 'Reached max videos.'
     else:  # p == max_pages
-        reason = 'Retrieved all available pages.'
+        reason = 'Reached max requests quota.'
 
+    if len(formatted_videos) > max_videos:
+        formatted_videos = formatted_videos[:max_videos]
+
+    plural = 's' if p > 1 else ''
     print(f'{reason}\n'
-          f'{p} pages retrieved.\n'
-          f'{len(videos_found)} videos collected.')
-
-    video_ids = []
-    channels = {}
-
-    print(f'Gathering video details...')
-    for video in videos_found:
-        video_ids.append(video['id']['videoId'])
-        channels[video['snippet']['channelId']] = {
-            'title': video['snippet']['channelTitle']
-        }
-
-    # Video stats
-    video_details_response = youtube.videos().list(
-        id=','.join(video_ids),
-        part='snippet,statistics'
-    ).execute()
-
-    print(f'Done. Gathering channels details...')
-
-    # Channel stats
-    channel_response = youtube.channels().list(
-        id=','.join(channels.keys()),
-        part='snippet,statistics'
-    ).execute()
-
-    print(f'Done. Gathering...')
-    for item in channel_response['items']:
-        channels[item['id']]['subscribers'] = int(item['statistics']['subscriberCount'])
-        channels[item['id']]['views'] = item['statistics']['viewCount']
-
-        country_code = item['snippet'].get('country')
-        country = countries.get(country_code).name if country_code else 'Not Available'
-        channels[item['id']]['country'] = country
-
-    # format and join
-    formatted_videos = []
-    for video in video_details_response['items']:
-        release_date = datetime.strptime(video['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
-
-        video_item = {
-            'id': video['id'],
-            'title': video['snippet']['title'],
-            'release_date': release_date,
-            'views': video['statistics']['viewCount'],
-            'channel': channels[video['snippet']['channelId']],
-            'discrepancy': False
-        }
-        formatted_videos.append(video_item)
+          f'{p} page{plural} retrieved.\n'
+          f'{len(formatted_videos)} videos collected.')
 
     return formatted_videos

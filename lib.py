@@ -171,30 +171,51 @@ def export_pdf(filename, niches, date_str):
     print(f'PDF file {_filename} created successfully.')
 
 
-def search_videos(q, date_cutoff=None):
-    search_response = youtube.search().list(
-        part='snippet',
-        q=q,
-        type='video',
-        publishedAfter=date_cutoff,
-        order='viewCount',
-        maxResults=10
-    ).execute()
-    n_videos = len(search_response['items'])
-    print(f'Done. {n_videos} videos found.')
+def search_videos(q, date_cutoff=None, max_pages=3, max_videos=10):
+    p = 0
+    videos_found = []
+    next_page = True
+    page_token = None
+    while p < max_pages and next_page and len(videos_found) < max_videos:
+        search_response = youtube.search().list(
+            part='snippet',
+            q=q,
+            type='video',
+            publishedAfter=date_cutoff,
+            order='viewCount',
+            pageToken=page_token,
+            maxResults=10
+        ).execute()
+
+        videos_found.extend(search_response['items'])
+        page_token = search_response.get('nextPageToken')
+        if not page_token:
+            next_page = False
+        p += 1
+
+    if not next_page:
+        reason = 'Reached max requests.'
+    elif len(videos_found) >= max_videos:
+        reason = 'Reached max videos.'
+    else:  # p == max_pages
+        reason = 'Retrieved all available pages.'
+
+    print(f'{reason}\n'
+          f'{p} pages retrieved.\n'
+          f'{len(videos_found)} videos collected.')
 
     video_ids = []
     channels = {}
 
     print(f'Gathering video details...')
-    for item in search_response['items']:
-        video_ids.append(item['id']['videoId'])
-        channels[item['snippet']['channelId']] = {
-            'title': item['snippet']['channelTitle']
+    for video in videos_found:
+        video_ids.append(video['id']['videoId'])
+        channels[video['snippet']['channelId']] = {
+            'title': video['snippet']['channelTitle']
         }
 
     # Video stats
-    video_response = youtube.videos().list(
+    video_details_response = youtube.videos().list(
         id=','.join(video_ids),
         part='snippet,statistics'
     ).execute()
@@ -217,9 +238,8 @@ def search_videos(q, date_cutoff=None):
         channels[item['id']]['country'] = country
 
     # format and join
-    videos = []
-
-    for video in video_response['items']:
+    formatted_videos = []
+    for video in video_details_response['items']:
         release_date = datetime.strptime(video['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
 
         video_item = {
@@ -230,6 +250,6 @@ def search_videos(q, date_cutoff=None):
             'channel': channels[video['snippet']['channelId']],
             'discrepancy': False
         }
-        videos.append(video_item)
+        formatted_videos.append(video_item)
 
-    return videos
+    return formatted_videos

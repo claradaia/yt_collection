@@ -1,6 +1,6 @@
 import conf
 from lib import query_yes_no, discrepancy, export_csv, parse_niches, export_html, export_pdf, get_title_suggestions, \
-    search_videos
+    search_videos, manual_check
 
 from datetime import datetime, timedelta
 from pytz import UTC
@@ -34,6 +34,11 @@ for niche in niches:
     niche['total_views_count'] = 0
     for video in niche['videos']:
         niche['total_views_count'] += int(video['views'])
+
+    print(f'Done.\n\n')
+
+    if query_yes_no('Do you want to check each video? [Y/n]:', default='yes'):
+        manual_check(niche['videos'])
 
     print(f'Done. Detecting discrepancies...')
 

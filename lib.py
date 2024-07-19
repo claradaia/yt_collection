@@ -8,6 +8,7 @@ from openai import OpenAI
 from iso3166 import countries
 from datetime import datetime
 from googleapiclient.discovery import build
+import webbrowser
 
 
 # configure yt access
@@ -269,3 +270,15 @@ def search_videos(q, date_cutoff=None, max_pages=3, max_videos=20, max_subscribe
           f'{len(formatted_videos)} videos collected.')
 
     return formatted_videos
+
+
+def manual_check(videos):
+    print(f'Starting manual check with {len(videos)}...')
+    for video in videos:
+        # open browser
+        url = f"https://www.youtube.com/watch?v={video['id']}"
+        webbrowser.open(url)
+
+        if not query_yes_no(f"\n\"{video['title']}\" --- Include? [Y/n]:", default='yes'):
+            videos.remove(video)
+    print(f'Videos left after manual check: {len(videos)}')

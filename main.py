@@ -7,7 +7,7 @@ from pytz import UTC
 
 # parse and check niches
 niches = parse_niches(conf.NICHES_FILE)
-if not query_yes_no(f'{niches}\n\nDoes this look correct? [Y/n]:'):
+if not query_yes_no(f'{niches}\n\nDoes this look correct? [Y/n]:', default='yes'):
     print(f'This is the value of conf.NICHES_FILE: {conf.NICHES_FILE}.\nCheck that the file name is correct and '
           'the contents of the file.')
     exit(0)

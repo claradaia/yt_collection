@@ -14,12 +14,14 @@ from googleapiclient.discovery import build
 youtube = build('youtube', 'v3', developerKey=conf.YT_API_KEY)
 
 
-def query_yes_no(question):
+def query_yes_no(question, default='no'):
     while True:
         answer = input(question)
+        if answer == '':
+            answer = default
         if answer in ['n', 'no', 'N']:
             return False
-        if answer in ['y', 'yes', 'Y', None]:
+        if answer in ['y', 'yes', 'Y']:
             return True
 
 
@@ -49,7 +51,8 @@ def get_title_suggestions(niche):
             {
               "type": "text",
               "text": "You are a famous youtuber that also knows programming. You will be provided with a topic, "
-                      "and your task is to print 10 suggested YouTube video names as a python list variable without any headers or extra formatting."
+                      "and your task is to print 10 suggested YouTube video names as a python list variable without "
+                      "any headers or extra formatting."
             }
           ]
         },
